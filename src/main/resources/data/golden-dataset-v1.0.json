@@ -1,0 +1,52 @@
+{
+  "datasetVersion": "v1.0.0",
+  "description": "Hand-curated ground-truth dataset for customer support email categorization & summarization.",
+  "lastUpdated": "2026-09-13",
+  "testCases": [
+    {
+      "id": "TC-001",
+      "inputText": "Hi team, I noticed a duplicate charge of $29.99 on my credit card statement for invoice #9812. Please issue a refund.",
+      "expectedCategory": "BILLING",
+      "expectedSummary": "Customer requested a $29.99 refund for duplicate invoice charge.",
+      "expectedDifficulty": "EASY",
+      "edgeCaseCategory": "STANDARD",
+      "notes": "Standard explicit billing refund request."
+    },
+    {
+      "id": "TC-002",
+      "inputText": "thx for charging me twice for 1 month service super awesome work guys",
+      "expectedCategory": "BILLING",
+      "expectedSummary": "Customer sarcastically reported being double-charged for monthly service.",
+      "expectedDifficulty": "EDGE_CASE",
+      "edgeCaseCategory": "SARCASM_AND_TYPOS",
+      "notes": "Sarcastic tone with lowercase/abbreviations. LLM judge must not mistake sarcasm for praise."
+    },
+    {
+      "id": "TC-003",
+      "inputText": "My login password reset link expired, and now when I try to log in, it says my billing account is locked.",
+      "expectedCategory": "ACCOUNT_ACCESS",
+      "expectedSummary": "User locked out due to expired password reset and locked billing account.",
+      "expectedDifficulty": "HARD",
+      "edgeCaseCategory": "CATEGORY_AMBIGUITY",
+      "notes": "Spans both Account Access and Billing. Primary issue is login lockout."
+    },
+    {
+      "id": "TC-004",
+      "inputText": "App crash on iOS 18 after tapping settings",
+      "expectedCategory": "TECHNICAL_SUPPORT",
+      "expectedSummary": "iOS 18 app crashes when navigating to settings menu.",
+      "expectedDifficulty": "MEDIUM",
+      "edgeCaseCategory": "EXTREMELY_SHORT",
+      "notes": "Ultra-short input without greeting or signature."
+    },
+    {
+      "id": "TC-005",
+      "inputText": "Hola, I cannot access my dashboard. El sistema dice error 403 authorization failed.",
+      "expectedCategory": "ACCOUNT_ACCESS",
+      "expectedSummary": "User getting 403 authorization error when accessing dashboard.",
+      "expectedDifficulty": "HARD",
+      "edgeCaseCategory": "MIXED_LANGUAGE",
+      "notes": "Code-switching between Spanish and English."
+    }
+  ]
+}
