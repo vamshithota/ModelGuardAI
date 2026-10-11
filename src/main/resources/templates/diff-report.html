@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ModelGuard - Evaluation Diff Report</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 30px; background-color: #f8f9fa; color: #212529; }
+        .card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .status-badge { padding: 6px 12px; border-radius: 4px; font-weight: bold; color: white; display: inline-block; }
+        .PASSED { background-color: #28a745; }
+        .WARNING { background-color: #ffc107; color: #212529; }
+        .CRITICAL { background-color: #dc3545; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
+        th { background-color: #e9ecef; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .metric-title { font-size: 0.85em; color: #6c757d; text-transform: uppercase; }
+        .metric-value { font-size: 1.5em; font-weight: bold; margin-top: 5px; }
+        .regression-row { background-color: #f8d7da; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2>🛡️ ModelGuard Evaluation Report</h2>
+    <p>Run ID: <code th:text="${run.id}"></code> | Timestamp: <span th:text="${run.createdAt}"></span></p>
+    <div class="status-badge" th:classappend="${run.status}" th:text="${run.status}">PASSED</div>
+</div>
+
+<div class="card grid">
+    <div>
+        <div class="metric-title">Prompt Version</div>
+        <div class="metric-value" th:text="${run.promptVersion}">v1.0</div>
+    </div>
+    <div>
+        <div class="metric-title">Pass Rate (Delta)</div>
+        <div class="metric-value" th:text="${#numbers.formatDecimal(run.passRatePercentage, 1, 1)} + '% (' + ${#numbers.formatDecimal(run.passRateDelta, 1, 1)} + '%)'">80.0%</div>
+    </div>
+    <div>
+        <div class="metric-title">Passed / Total</div>
+        <div class="metric-value" th:text="${run.passedCases} + ' / ' + ${run.totalCases}">4 / 5</div>
+    </div>
+    <div>
+        <div class="metric-title">Regressions</div>
+        <div class="metric-value" th:text="${run.regressionCount}">0</div>
+    </div>
+</div>
+
+<!-- FIX 1 & 2: Added null check on drift and safe boolean navigation -->
+<div class="card" th:if="${drift != null and drift.driftDetected()}">
+    <h3 style="color: #856404; margin-top: 0;">⚠️ Slow Drift Alert</h3>
+    <p th:text="${drift.message()}"></p>
+</div>
+
+<div class="card">
+    <h3>Test Case Breakdown</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>Case ID</th>
+            <th>Category Match</th>
+            <th>Relevance (1-5)</th>
+            <th>Hallucination</th>
+            <th>Latency</th>
+            <th>Status</th>
+            <th>Judge Reasoning</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- FIX 3: Changed ${tc.isRegression} to ${tc.regression} for standard JPA getter access -->
+        <tr th:each="tc : ${run.testResults}" th:classappend="${tc.regression} ? 'regression-row' : ''">
+            <td th:text="${tc.testCaseId}">TC-001</td>
+            <td th:text="${tc.categoryMatched}">true</td>
+            <td th:text="${tc.relevanceScore}">5</td>
+            <td th:text="${tc.containsHallucination}">false</td>
+            <td th:text="${tc.latencyMs} + ' ms'">250 ms</td>
+            <td th:text="${tc.passed ? 'PASSED' : 'FAILED'}">PASSED</td>
+            <td th:text="${tc.judgeReasoning}">Summary accurately captures billing refund context.</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

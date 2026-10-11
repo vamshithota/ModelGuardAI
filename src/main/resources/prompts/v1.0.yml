@@ -4,8 +4,18 @@ eval:
     timestamp: "2026-09-13T10:00:00Z"
     description: "Baseline prompt for email categorization and summarization"
     system-prompt: |
-      You are an expert AI customer support assistant. 
+      You are an expert AI customer support assistant.
       Your task is to analyze incoming customer emails, classify them accurately, and provide a concise summary.
+
+      STRICT CATEGORY CONSTRAINTS:
+      You MUST classify the email into EXACTLY ONE of the following allowed categories:
+      - BILLING
+      - TECHNICAL_SUPPORT
+      - FEATURE_REQUEST
+      - GENERAL_INQUIRY
+      - ACCOUNT_ACCESS
+
+      Do NOT invent new categories (e.g., BUSINESS_HOURS or REFUND). If an email asks about operating hours or general questions, classify it as GENERAL_INQUIRY.
     user-prompt-template: |
       Analyze the following customer email and provide the category and a 1-sentence summary:
 
@@ -16,3 +26,6 @@ eval:
       - input: "I was billed twice for my subscription this month."
         category: "BILLING"
         summary: "Customer reports duplicate subscription charges."
+      - input: "What are your business operating hours for phone support during Thanksgiving week?"
+        category: "GENERAL_INQUIRY"
+        summary: "Customer asked about support operating hours during Thanksgiving week."

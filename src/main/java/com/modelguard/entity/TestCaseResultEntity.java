@@ -1,4 +1,5 @@
 package com.modelguard.entity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
@@ -12,7 +13,7 @@ public class TestCaseResultEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "eval_run_id")
-    @JsonIgnoreProperties("testResults")
+    @JsonIgnore
     private EvalRunEntity evalRun;
 
     @Column(nullable = false)

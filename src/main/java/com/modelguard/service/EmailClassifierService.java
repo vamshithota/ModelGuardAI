@@ -32,7 +32,11 @@ public class EmailClassifierService {
 
     // Method to classify email type
     public EmailClassificationResult classify(String emailBody){
-        PromptTemplate promptTemplate = new PromptTemplate(customPromptConfig.getUserPromptTemplate());
+        String userPromptTemplate = Objects.requireNonNull(
+                customPromptConfig.getUserPromptTemplate(),
+                "User prompt template is null in CustomPromptConfig!"
+        );
+        PromptTemplate promptTemplate = new PromptTemplate(userPromptTemplate);
         var message = promptTemplate.createMessage(Map.of("emailBody", emailBody));
         try{
            return chatClient.prompt()

@@ -1,7 +1,7 @@
 {
   "datasetVersion": "v1.0.0",
-  "description": "Hand-curated ground-truth dataset for customer support email categorization & summarization.",
-  "lastUpdated": "2026-09-13",
+  "description": "Hand-curated ground-truth dataset for customer support email classification & summarization.",
+  "lastUpdated": "2026-10-04",
   "testCases": [
     {
       "id": "TC-001",
@@ -9,7 +9,6 @@
       "expectedCategory": "BILLING",
       "expectedSummary": "Customer requested a $29.99 refund for duplicate invoice charge.",
       "expectedDifficulty": "EASY",
-      "edgeCaseCategory": "STANDARD",
       "notes": "Standard explicit billing refund request."
     },
     {
@@ -18,17 +17,15 @@
       "expectedCategory": "BILLING",
       "expectedSummary": "Customer sarcastically reported being double-charged for monthly service.",
       "expectedDifficulty": "EDGE_CASE",
-      "edgeCaseCategory": "SARCASM_AND_TYPOS",
       "notes": "Sarcastic tone with lowercase/abbreviations. LLM judge must not mistake sarcasm for praise."
     },
     {
       "id": "TC-003",
       "inputText": "My login password reset link expired, and now when I try to log in, it says my billing account is locked.",
       "expectedCategory": "ACCOUNT_ACCESS",
-      "expectedSummary": "User locked out due to expired password reset and locked billing account.",
+      "expectedSummary": "User locked out due to expired password reset and locked account.",
       "expectedDifficulty": "HARD",
-      "edgeCaseCategory": "CATEGORY_AMBIGUITY",
-      "notes": "Spans both Account Access and Billing. Primary issue is login lockout."
+      "notes": "Category ambiguity: spans both Account Access and Billing. Primary blocker is login lockout."
     },
     {
       "id": "TC-004",
@@ -36,17 +33,95 @@
       "expectedCategory": "TECHNICAL_SUPPORT",
       "expectedSummary": "iOS 18 app crashes when navigating to settings menu.",
       "expectedDifficulty": "MEDIUM",
-      "edgeCaseCategory": "EXTREMELY_SHORT",
-      "notes": "Ultra-short input without greeting or signature."
+      "notes": "Ultra-short input lacking formal greeting or signature."
     },
     {
       "id": "TC-005",
       "inputText": "Hola, I cannot access my dashboard. El sistema dice error 403 authorization failed.",
       "expectedCategory": "ACCOUNT_ACCESS",
-      "expectedSummary": "User getting 403 authorization error when accessing dashboard.",
+      "expectedSummary": "User receiving a 403 authorization error when attempting dashboard access.",
       "expectedDifficulty": "HARD",
-      "edgeCaseCategory": "MIXED_LANGUAGE",
-      "notes": "Code-switching between Spanish and English."
+      "notes": "Mixed language / code-switching (Spanish/English)."
+    },
+    {
+      "id": "TC-006",
+      "inputText": "i paid yestarday via wire transfr but my subscripstion still shows unpdaed??? fix this fast",
+      "expectedCategory": "BILLING",
+      "expectedSummary": "Customer reports unpaid subscription status despite submitting wire payment yesterday.",
+      "expectedDifficulty": "MEDIUM",
+      "notes": "Heavy typos ('yestarday', 'transfr', 'subscripstion', 'unpdaed')."
+    },
+    {
+      "id": "TC-007",
+      "inputText": "Can you please add an export to CSV button on the weekly analytics page? It would save us hours.",
+      "expectedCategory": "FEATURE_REQUEST",
+      "expectedSummary": "Customer requested a CSV export feature on the weekly analytics dashboard.",
+      "expectedDifficulty": "EASY",
+      "notes": "Clear, single-intent product enhancement request."
+    },
+    {
+      "id": "TC-008",
+      "inputText": "Great job removing the dark mode option in the last update. My eyes love staring at pure white at 2 AM.",
+      "expectedCategory": "FEATURE_REQUEST",
+      "expectedSummary": "Customer sarcastically complained about the removal of dark mode and implied wanting it back.",
+      "expectedDifficulty": "EDGE_CASE",
+      "notes": "Sarcastic complaint about removed feature requiring restoration."
+    },
+    {
+      "id": "TC-009",
+      "inputText": "What are your business operating hours for phone support during Thanksgiving week?",
+      "expectedCategory": "GENERAL_INQUIRY",
+      "expectedSummary": "Customer asked about support operating hours during Thanksgiving week.",
+      "expectedDifficulty": "EASY",
+      "notes": "Standard general informational question."
+    },
+    {
+      "id": "TC-010",
+      "inputText": "I was trying to update my credit card details on the billing tab, but the form button stays disabled and throws JS error in console.",
+      "expectedCategory": "TECHNICAL_SUPPORT",
+      "expectedSummary": "User encountered a frontend JavaScript error preventing credit card updates on billing tab.",
+      "expectedDifficulty": "HARD",
+      "notes": "Ambiguous domain: mentions billing, but root cause is a UI/JS technical bug."
+    },
+    {
+      "id": "TC-011",
+      "inputText": "I need to remove two former employees from our organization seat list so we stop getting charged for them.",
+      "expectedCategory": "ACCOUNT_ACCESS",
+      "expectedSummary": "Customer requested removal of former employee seats to adjust organization billing.",
+      "expectedDifficulty": "MEDIUM",
+      "notes": "User management / seat provisioning with secondary billing implications."
+    },
+    {
+      "id": "TC-012",
+      "inputText": "WHERE IS MY INVOICE FOR AUGUST??? I ASKED THREE TIMES ALREADY!",
+      "expectedCategory": "BILLING",
+      "expectedSummary": "Customer urgently demanded their missing August invoice after multiple requests.",
+      "expectedDifficulty": "EASY",
+      "notes": "All-caps high-urgency billing document inquiry."
+    },
+    {
+      "id": "TC-013",
+      "inputText": "Is there an official Java SDK or REST API endpoint to trigger bulk webhook updates programmatically?",
+      "expectedCategory": "GENERAL_INQUIRY",
+      "expectedSummary": "Developer inquired about Java SDK or REST API support for programmatic webhook updates.",
+      "expectedDifficulty": "MEDIUM",
+      "notes": "Technical developer inquiry, but categorizes under General Inquiry as a pre-sales/developer question."
+    },
+    {
+      "id": "TC-014",
+      "inputText": "Bonjour, my API key stopped working after I renewed my subscription. Error says key revoked.",
+      "expectedCategory": "TECHNICAL_SUPPORT",
+      "expectedSummary": "User reports revoked API key error following subscription renewal.",
+      "expectedDifficulty": "HARD",
+      "notes": "Bilingual opening with post-billing technical key invalidation."
+    },
+    {
+      "id": "TC-015",
+      "inputText": "help",
+      "expectedCategory": "GENERAL_INQUIRY",
+      "expectedSummary": "User submitted a single-word request seeking generic assistance.",
+      "expectedDifficulty": "EDGE_CASE",
+      "notes": "Single-word input with zero context."
     }
   ]
 }

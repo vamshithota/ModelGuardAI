@@ -1,6 +1,7 @@
 package com.modelguard.service;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.modelguard.configs.CustomPromptConfig;
 import com.modelguard.configs.EvalEngineConfig;
 import com.modelguard.entity.EvalRunEntity;
 import com.modelguard.entity.TestCaseResultEntity;
@@ -25,9 +26,11 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+
 @Service
 public class EvaluationEngineService {
     private static final Logger log = LoggerFactory.getLogger(EvaluationEngineService.class);
+
 
     private static final String JUDGE_SYSTEM_PROMPT = """
         You are an expert AI Evaluation System auditing the output quality of a customer support email summarizer.
@@ -64,15 +67,20 @@ public class EvaluationEngineService {
     private final ChatClient judgeChatClient;
     private final EvalRunRepository evalRunRepository;
     private final EvalEngineConfig engineConfig;
+    private final CustomPromptConfig promptConfig;
+    private final SlackAlertService slackAlertService;
 
     public EvaluationEngineService(EmailClassifierService classifierService,
                                    ChatClient.Builder chatClientBuilder,
                                    EvalRunRepository evalRunRepository,
-                                   EvalEngineConfig engineConfig) {
+                                   EvalEngineConfig engineConfig, CustomPromptConfig promptConfig,
+                                   SlackAlertService slackAlertService) {
         this.classifierService = classifierService;
         this.judgeChatClient = chatClientBuilder.defaultSystem(JUDGE_SYSTEM_PROMPT).build();
         this.evalRunRepository = evalRunRepository;
         this.engineConfig = engineConfig;
+        this.promptConfig = promptConfig;
+        this.slackAlertService = slackAlertService;
     }
 
     public record JudgeEvaluationResult(
@@ -109,17 +117,22 @@ public class EvaluationEngineService {
                     })
                     .toList();
         }
-
+        // Fetch baseline run before creating entity
+        Optional<EvalRunEntity> baselineOpt = evalRunRepository.findFirstByOrderByCreatedAtDesc();
         // Build and populate parent run entity
         EvalRunEntity run = new EvalRunEntity();
         run.setPromptVersion(promptVersion);
+        run.setSystemPrompt(promptConfig.getSystemPrompt());
+        run.setUserPromptTemplate(promptConfig.getUserPromptTemplate());
+        run.setPromptHash(promptConfig.calculatePromptHash());
         run.setModelName("gpt-4o-mini");
         run.setCreatedAt(OffsetDateTime.now());
         run.setTotalCases(results.size());
 
         int passedCount = (int) results.stream().filter(TestCaseResultEntity::isPassed).count();
+        int failedCount = results.size() - passedCount;
         run.setPassedCases(passedCount);
-        run.setFailedCases(results.size() - passedCount);
+        run.setFailedCases(failedCount);
 
         double passRate = results.isEmpty() ? 0.0 : ((double) passedCount / results.size()) * 100.0;
         run.setPassRatePercentage(passRate);
@@ -129,15 +142,25 @@ public class EvaluationEngineService {
 
         results.forEach(run::addTestResult);
 
-        // Fetch baseline run for diff calculation
-        Optional<EvalRunEntity> baselineOpt = evalRunRepository.findFirstByOrderByCreatedAtDesc();
+        // Run diffing against baseline
         RunComparisonResult comparison = calculateDiffAndThresholds(run, baselineOpt.orElse(null));
 
         run.setPassRateDelta(comparison.passRateDelta());
         run.setRegressionCount(comparison.totalRegressions());
-        run.setStatus(comparison.runStatus());
 
-        return evalRunRepository.save(run);
+        // Overall status assignment: Force FAILED/CRITICAL if test case failures exist
+        if (failedCount > 0 && comparison.runStatus() == EvalRunEntity.RunStatus.PASSED) {
+            run.setStatus(EvalRunEntity.RunStatus.CRITICAL);
+        } else {
+            run.setStatus(comparison.runStatus());
+        }
+
+        EvalRunEntity savedRun = evalRunRepository.save(run);
+
+        String reportUrl = "http://localhost:8080/reports/run/" + savedRun.getId();
+        slackAlertService.sendEvalRunAlert(savedRun, reportUrl);
+
+        return savedRun;
     }
 
     private TestCaseResultEntity evaluateSingleTestCase(GoldenTestCase tc, String promptVersion) {
@@ -190,9 +213,14 @@ public class EvaluationEngineService {
             return new JudgeEvaluationResult(1, true, "EVALUATION_ERROR: " + e.getMessage());
         }
     }
-
+    // To calculate the percentage drop relative to baseline and assign
+    // WARNING or CRITICAL statuses according to EvalEngineConfig
     public RunComparisonResult calculateDiffAndThresholds(EvalRunEntity currentRun, EvalRunEntity baselineRun) {
         if (baselineRun == null) {
+            EvalRunEntity.RunStatus initialStatus = currentRun.getFailedCases() > 0
+                    ? EvalRunEntity.RunStatus.CRITICAL
+                    : EvalRunEntity.RunStatus.PASSED;
+
             return new RunComparisonResult(
                     currentRun.getPassRatePercentage(),
                     0.0,
@@ -201,7 +229,7 @@ public class EvaluationEngineService {
                     0,
                     Collections.emptyList(),
                     Collections.emptyList(),
-                    EvalRunEntity.RunStatus.PASSED
+                    initialStatus
             );
         }
 
@@ -248,4 +276,5 @@ public class EvaluationEngineService {
                 status
         );
     }
+
 }
